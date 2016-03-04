@@ -9,7 +9,7 @@ def get_scopes(view, start_at_position, stop_at_position):
         if current_scope is None:
             current_scope = (scope, pos, pos)
         elif current_scope[0] == scope: # if the current scope is exactly the same, extend it
-            current_scope = (current_scope[0], current_scope[1], pos)
+            current_scope = (current_scope[0], current_scope[1], pos) # NOTE: if step is -1, as opposed to 1, then current_scope[1] will be > current_scope[2]
         else: # the previous scope is complete, register new one
             yield current_scope
             current_scope = (scope, pos, pos)

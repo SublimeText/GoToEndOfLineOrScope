@@ -1,5 +1,6 @@
 import sublime
 import sublime_plugin
+from itertools import takewhile
 from .sublime_helper import get_scopes
 
 class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
@@ -10,7 +11,7 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
         
         new_cursors = []
         for cursor in self.view.sel():
-            line = self.view.line(cursor.b) # NOTE: deliberate use of `cursor.b` everywhere and not `cursor.end()`
+            line = self.view.line(cursor.b) # NOTE: deliberate use of `cursor.a` `cursor.b` everywhere and not `cursor.begin()` and `cursor.end()`
             
             check_scope = line.end() == cursor.b # if the cursor is at the end of the line, check the scope at the end of the line
             if not check_scope: # if the cursor is not at the end of the line
@@ -19,9 +20,10 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
             desired_end_pos = line.end() # defaultly use default end of line behavior
             if check_scope:
                 if self.view.match_selector(line.end() - 1, kwargs['scope']): # if the last character on the line contains the desired scope
-                    scope_begin = [scope_begin for scope_name, scope_begin, scope_end in get_scopes(self.view, line.end() - 1, line.begin()) if kwargs['scope'] in scope_name][-1]
+                    relevant_scope_matches = list(takewhile(lambda scope: kwargs['scope'] in scope[0], get_scopes(self.view, line.end() - 1, line.begin()))) # work backwards from the end of the line while the scope matches
+                    scope_begin = sublime.Region(relevant_scope_matches[-1][1], relevant_scope_matches[-1][2]).begin()
                     if scope_begin != cursor.b: # if the cursor is not already at the character that represents the start of the desired scope
-                        desired_end_pos = scope_begin # move the cursor to the start of the comment
+                        desired_end_pos = scope_begin # move the cursor to the start of the desired scope
             
             start_pos = desired_end_pos
             if extend:
