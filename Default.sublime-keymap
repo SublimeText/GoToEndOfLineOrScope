@@ -1,4 +1,4 @@
 [
-    { "keys": ["end"]      , "command": "move_to_end_of_line_or_before_specified_scope", "args": { "scope": "comment", "extend": false, "eol_first": true } },
-    { "keys": ["shift+end"], "command": "move_to_end_of_line_or_before_specified_scope", "args": { "scope": "comment", "extend": true , "eol_first": true } }
+    { "keys": ["end"]      , "command": "move_to_end_of_line_or_before_specified_scope", "args": { "scope": "comment", "extend": false, "eol_first": true, "before_whitespace": true } },
+    { "keys": ["shift+end"], "command": "move_to_end_of_line_or_before_specified_scope", "args": { "scope": "comment", "extend": true , "eol_first": true, "before_whitespace": true } }
 ]
