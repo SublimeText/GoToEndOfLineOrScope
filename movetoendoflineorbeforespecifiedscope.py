@@ -14,7 +14,7 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
         for cursor in self.view.sel():
             line = self.view.line(cursor.b) # NOTE: deliberate use of `cursor.a` and `cursor.b` everywhere and not `cursor.begin()` and `cursor.end()`
             
-            check_scope = line.end() == cursor.b # if the cursor is at the end of the line, check the scope at the end of the line
+            check_scope = line.end() == cursor.b and (extend or cursor.empty()) # if the cursor is at the end of the line, check the scope at the end of the line
             if not check_scope: # if the cursor is not at the end of the line
                 check_scope = not kwargs.get('eol_first', True) # check the scope at the end of the line if the preference is to go to the scope first, then the eol
             
