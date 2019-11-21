@@ -18,7 +18,7 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
             if not check_scope: # if the cursor is not at the end of the line
                 check_scope = not kwargs.get('eol_first', True) # check the scope at the end of the line if the preference is to go to the scope first, then the eol
             
-            desired_end_pos = line.end() # defaultly use default end of line behavior
+            desired_end_pos = next(get_logical_eol_positions(self.view, (cursor.b, ))) # defaultly use default end of logical line behavior
             if check_scope:
                 if self.view.match_selector(line.end() - 1, kwargs['scope']): # if the last character on the line contains the desired scope
                     relevant_scope_matches = list(takewhile(lambda scope: kwargs['scope'] in scope[0], get_scopes(self.view, line.end() - 1, line.begin()))) # work backwards from the end of the line while the scope matches
@@ -46,3 +46,10 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
         self.view.sel().clear()
         self.view.sel().add_all(new_cursors)
         self.view.show(new_cursors[0]) # scroll to show the first cursor, if it is not already visible
+
+def get_logical_eol_positions(view, positions):
+    width, _ = view.layout_extent()
+    for pos in positions:
+        _, y = view.text_to_layout(pos)
+        eol_pos = view.layout_to_text((width, y))
+        yield eol_pos
