@@ -1,17 +1,23 @@
-def get_scopes(view, start_at_position, stop_at_position):
-    """Return the unique scopes in the view between start_at_position and stop_at_position, in the order in which they occur."""
-    current_scope = None
-    step = 1
-    if stop_at_position < start_at_position:
-        step = -1
-    for pos in range(start_at_position, stop_at_position, step):
-        scope = view.scope_name(pos)
-        if current_scope is None:
-            current_scope = (scope, pos, pos)
-        elif current_scope[0] == scope: # if the current scope is exactly the same, extend it
-            current_scope = (current_scope[0], current_scope[1], pos) # NOTE: if step is -1, as opposed to 1, then current_scope[1] will be > current_scope[2]
-        else: # the previous scope is complete, register new one
-            yield current_scope
-            current_scope = (scope, pos, pos)
-    if current_scope is not None:
-        yield current_scope
+import sublime
+
+def get_previous_token_on_line_which_matches_selector(view, from_pos, selector):
+    line_begin = view.line(from_pos).begin()
+    previous_token = None
+    while from_pos >= line_begin:
+        tokens = view.extract_tokens_with_scopes(sublime.Region(from_pos, from_pos))
+        if not tokens:
+            break
+        for token in reversed(tokens):
+            if sublime.score_selector(token[1], selector) == 0:
+                return previous_token
+            previous_token = token
+        from_pos = tokens[-1][0].begin() - 1
+    return previous_token
+
+
+def get_logical_eol_positions(view, positions):
+    width, _ = view.layout_extent()
+    for pos in positions:
+        _, y = view.text_to_layout(pos)
+        eol_pos = view.layout_to_text((width, y))
+        yield eol_pos
