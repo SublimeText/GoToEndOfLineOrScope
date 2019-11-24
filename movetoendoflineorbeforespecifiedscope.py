@@ -10,8 +10,9 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
         extend = kwargs.get('extend', False)
         before_whitespace = kwargs.get('before_whitespace', False)
         scope = kwargs['scope']
+        eol_first = kwargs.get('eol_first', False)
         
-        new_cursors = calculate_eol_positions(self.view, self.view.sel(), extend, before_whitespace, scope)
+        new_cursors = calculate_eol_positions(self.view, self.view.sel(), extend, before_whitespace, scope, eol_first)
         self.set_cursors(new_cursors)
 
     def set_cursors(self, new_cursors):
@@ -19,14 +20,14 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
         self.view.sel().add_all(new_cursors)
         self.view.show(new_cursors[0]) # scroll to show the first cursor, if it is not already visible
 
-def calculate_eol_positions(view, cursors, extend, before_whitespace, before_scope):
+def calculate_eol_positions(view, cursors, extend, before_whitespace, before_scope, eol_first):
     new_cursors = []
     for cursor in cursors:
         line = view.line(cursor.b) # NOTE: deliberate use of `cursor.a` and `cursor.b` everywhere and not `cursor.begin()` and `cursor.end()`
         
         eol_positions = set([
+            next(get_logical_eol_positions(view, (cursor.b, ))), # soft eol
             line.end(), # hard eol
-            next(get_logical_eol_positions(view, (cursor.b, ))) # soft eol
         ])
         
         relevant_token = get_previous_token_on_line_which_matches_selector(view, line.end(), before_scope)
@@ -42,12 +43,12 @@ def calculate_eol_positions(view, cursors, extend, before_whitespace, before_sco
 
             eol_positions.add(before_scope_pos)
         
-        eol_positions = sorted(eol_positions)
+        list_method = sorted if not eol_first else list
 
-        desired_end_pos = next((eol_pos for eol_pos in eol_positions if eol_pos > cursor.b), None)
+        desired_end_pos = next((eol_pos for eol_pos in list_method(eol_positions) if eol_pos > cursor.b), None)
         if not desired_end_pos: # no eol position was found after the caret position
             if len(eol_positions) > 1:
-                desired_end_pos = eol_positions[-2] # jump back to the previous eol pos, i.e. before a comment starts
+                desired_end_pos = sorted(eol_positions)[-2] # jump back to the previous eol pos, i.e. before a comment starts
             else:
                 desired_end_pos = cursor.b # keep the caret in the same position
         if extend:
