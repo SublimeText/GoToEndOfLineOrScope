@@ -10,7 +10,7 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
         extend = kwargs.get('extend', False)
         before_whitespace = kwargs.get('before_whitespace', False)
         scope = kwargs['scope']
-        eol_first = kwargs.get('eol_first', False)
+        eol_first = kwargs.get('eol_first', 'auto')
         
         new_cursors = calculate_eol_positions(self.view, self.view.sel(), extend, before_whitespace, scope, eol_first)
         self.set_cursors(new_cursors)
@@ -25,10 +25,10 @@ def calculate_eol_positions(view, cursors, extend, before_whitespace, before_sco
     for cursor in cursors:
         line = view.line(cursor.b) # NOTE: deliberate use of `cursor.a` and `cursor.b` everywhere and not `cursor.begin()` and `cursor.end()`
         
-        eol_positions = set([
+        eol_positions = list(set([
             next(get_logical_eol_positions(view, (cursor.b, ))), # soft eol
             line.end(), # hard eol
-        ])
+        ]))
         
         relevant_token = get_previous_token_on_line_which_matches_selector(view, line.end(), before_scope)
         
@@ -41,14 +41,16 @@ def calculate_eol_positions(view, cursors, extend, before_whitespace, before_sco
                 if rtrimmed.strip() != '':
                     before_scope_pos -= len(line_text_before_scope) - len(rtrimmed)
 
-            eol_positions.add(before_scope_pos)
-        
-        list_method = sorted if not eol_first else list
+            eol_positions.append(before_scope_pos)
+
+        if eol_first == 'auto':
+            eol_first = len(eol_positions) < 3
+        list_method = list if eol_first else sorted
 
         desired_end_pos = next((eol_pos for eol_pos in list_method(eol_positions) if eol_pos > cursor.b), None)
         if not desired_end_pos: # no eol position was found after the caret position
             if len(eol_positions) > 1:
-                desired_end_pos = sorted(eol_positions)[-2] # jump back to the previous eol pos, i.e. before a comment starts
+                desired_end_pos = before_scope_pos # jump back to the previous eol pos, i.e. before a comment starts
             else:
                 desired_end_pos = cursor.b # keep the caret in the same position
         if extend:
