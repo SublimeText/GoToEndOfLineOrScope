@@ -1,4 +1,18 @@
 [
-    { "keys": ["end"]      , "command": "move_to_end_of_line_or_before_specified_scope", "args": { "scope": "comment", "extend": false, "eol_first": "auto", "before_whitespace": true } },
-    { "keys": ["shift+end"], "command": "move_to_end_of_line_or_before_specified_scope", "args": { "scope": "comment", "extend": true , "eol_first": "auto", "before_whitespace": true } }
+    // here we look only at EOL, because we aren't interested in block comments in the middle of the line, for example
+    { "keys": ["end"]      , "command": "move_to_end_of_line_or_before_specified_scope", "args": { "scope": "comment", "extend": false, "eol_first": "auto", "before_whitespace": true, "find_only_at_eol": true, } },
+    { "keys": ["shift+end"], "command": "move_to_end_of_line_or_before_specified_scope", "args": { "scope": "comment", "extend": true , "eol_first": "auto", "before_whitespace": true, "find_only_at_eol": true, } },
+
+    /*
+    // here is an example that will find the last semi-colon or comment on the line and jump to that.
+    {
+        "keys": ["shift+right"],
+        "command": "move_to_end_of_line_or_before_specified_scope",
+        "args": {
+            "scope": "punctuation.terminator.statement, comment",
+            "before_whitespace": true,
+            "eol_first": false,
+            "find_only_at_eol": false,
+        }
+    },*/
 ]

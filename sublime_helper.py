@@ -1,6 +1,6 @@
 import sublime
 
-def get_previous_token_on_line_which_matches_selector(view, from_pos, selector):
+def get_previous_token_on_line_which_matches_selector(view, from_pos, selector, find_only_tokens_at_eol):
     line_begin = view.line(from_pos).begin()
     previous_token = None
     while from_pos >= line_begin:
@@ -9,7 +9,10 @@ def get_previous_token_on_line_which_matches_selector(view, from_pos, selector):
             break
         for token in reversed(tokens):
             if sublime.score_selector(token[1], selector) == 0:
-                return previous_token
+                if find_only_tokens_at_eol or previous_token:
+                    return previous_token
+                else:
+                    continue
             previous_token = token
         from_pos = tokens[-1][0].begin() - 1
     return previous_token

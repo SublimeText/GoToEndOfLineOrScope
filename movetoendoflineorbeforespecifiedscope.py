@@ -11,8 +11,9 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
         before_whitespace = kwargs.get('before_whitespace', False)
         scope = kwargs['scope']
         eol_first = kwargs.get('eol_first', 'auto')
+        find_only_at_eol = kwargs.get('find_only_at_eol', True)
         
-        new_cursors = calculate_eol_positions(self.view, self.view.sel(), extend, before_whitespace, scope, eol_first)
+        new_cursors = calculate_eol_positions(self.view, self.view.sel(), extend, before_whitespace, scope, eol_first, find_only_at_eol)
         self.set_cursors(new_cursors)
 
     def set_cursors(self, new_cursors):
@@ -20,7 +21,7 @@ class MoveToEndOfLineOrBeforeSpecifiedScopeCommand(sublime_plugin.TextCommand):
         self.view.sel().add_all(new_cursors)
         self.view.show(new_cursors[0]) # scroll to show the first cursor, if it is not already visible
 
-def calculate_eol_positions(view, cursors, extend, before_whitespace, before_scope, eol_first):
+def calculate_eol_positions(view, cursors, extend, before_whitespace, before_scope, eol_first, find_only_at_eol):
     new_cursors = []
     for cursor in cursors:
         line = view.line(cursor.b) # NOTE: deliberate use of `cursor.a` and `cursor.b` everywhere and not `cursor.begin()` and `cursor.end()`
@@ -30,7 +31,7 @@ def calculate_eol_positions(view, cursors, extend, before_whitespace, before_sco
             line.end(), # hard eol
         ]))
         
-        relevant_token = get_previous_token_on_line_which_matches_selector(view, line.end(), before_scope)
+        relevant_token = get_previous_token_on_line_which_matches_selector(view, line.end() - (1 if line.size() > 0 else 0), before_scope, find_only_at_eol)
         
         if relevant_token:
             before_scope_pos = relevant_token[0].begin()
